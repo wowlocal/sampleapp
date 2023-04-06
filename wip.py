@@ -108,7 +108,7 @@ def publish_gradle_libs(project_list):
 def update_radar_file(project_list):
 	for project in project_list:
 		radar = parse_toml(toml_file)
-		radar['proj_list'][project.name]['commit'] = project.new_commit
+		radar[project.name]['commit'] = project.new_commit
 		with open(toml_file, 'w') as f:
 			toml.dump(radar, f)
 
