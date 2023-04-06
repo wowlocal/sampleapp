@@ -101,7 +101,7 @@ afterEvaluate {{
 
 def publish_gradle_libs(project_list):
 	for project in project_list:
-		if os.system(f"cd {project.local_path} && ./gradlew publishToMavenLocal") != 0:
+		if os.system(f"./gradlew publishToMavenLocal") != 0:
 			return 1
 	return 0
 
