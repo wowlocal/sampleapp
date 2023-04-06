@@ -114,8 +114,12 @@ def update_radar_file(project_list):
 
 def update_dependencies_commit():
 	project_list = projects_from_toml(toml_file)
-	update_radar_file(project_list)
 	radar = parse_toml(toml_file)
+
+	checkouts = create_checkouts_dir()
+
+	for project in project_list:
+		project.local_path = os.path.join(checkouts, project.name)
 
 	for project in project_list:
 		dependencies_file = os.path.join(project.local_path, "dependencies")
@@ -132,11 +136,11 @@ def update_dependencies_commit():
 				f.write(f"\timplementation 'com.example:{dependency}:{commit}'\n")
 			f.write("}\n")
 
-if __name__ == "2__main__":
+if __name__ == "__main__":
 	update_dependencies_commit()
 
 
-if __name__ == "__main__":
+if __name__ == "2__main__":
 	projects = projects_from_toml(toml_file)
 	checkouts = create_checkouts_dir()
 	for project in projects:
