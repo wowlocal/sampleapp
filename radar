@@ -1,5 +1,11 @@
 git_base_url = "https://github.com/wowlocal"
-proj_list = ["payments"]
+proj_list = [ "payments", "messenger", "networking"]
 
 [payments]
-commit = "f0c918a"
+commit = "547fc4a1d4de550aa104113f5eda30fb7c5cf1e2"
+
+[messenger]
+commit = "d44bf835d61a05da45ada49bbe49a10cc6ca919f"
+
+[networking]
+commit = "38aa7a7a717c366c6d9814605aa13236b8766c9a"

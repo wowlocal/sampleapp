@@ -11,6 +11,8 @@ import android.view.Menu
 import android.view.MenuItem
 import com.example.bank_app.databinding.ActivityMainBinding
 
+import com.example.messenger_lib.MessengerKit
+
 class MainActivity : AppCompatActivity() {
 
     private lateinit var appBarConfiguration: AppBarConfiguration
@@ -18,6 +20,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        MessengerKit().sendMessage()
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
