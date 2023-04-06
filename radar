@@ -1,0 +1,5 @@
+git_base_url = "https://github.com/wowlocal"
+proj_list = ["payments"]
+
+[payments]
+commit = "f0c918a"
