@@ -114,6 +114,7 @@ def update_radar_file(project_list):
 
 def update_dependencies_commit():
 	project_list = projects_from_toml(toml_file)
+	update_radar_file(project_list)
 	radar = parse_toml(toml_file)
 
 	for project in project_list:
@@ -132,7 +133,6 @@ def update_dependencies_commit():
 			f.write("}\n")
 
 if __name__ == "2__main__":
-	reset_deps_files()
 	update_dependencies_commit()
 
 
