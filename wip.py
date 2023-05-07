@@ -64,16 +64,25 @@ def reset_deps_files(projects):
 		gradle_dependencies_file = os.path.join(project.local_path, "internal_dependencies.gradle")
 		open(gradle_dependencies_file, 'w').close()
 
-def change_dependencies_to_local_sources(project_list):
+def add_include_to_settings(project_list):
 	for project in project_list:
 		with open(os.path.join(current_dir, "internal_dependencies.gradle"), 'a') as f:
 			f.write(f"include ':libs:{project.name}'\n")
 
+def add_app_dependencies(project_list):
+	with open(os.path.join(current_dir, "app", "internal_dependencies.gradle"), 'w') as f:
+		f.write("dependencies {\n")
+		for project in project_list:
+			f.write(f"\timplementation project(':libs:{project.name}')\n")
+		f.write("}\n")
+
+def change_dependencies_to_local_sources(project_list):
+	add_include_to_settings(project_list)
+	for project in project_list:
 		dependencies_file = os.path.join(project.local_path, "dependencies")
 		if not os.path.exists(dependencies_file):
 			continue
 		with open(dependencies_file, 'r') as f:
-			# split file by new line
 			dependencies = f.read().splitlines()
 		with open(os.path.join(project.local_path, "internal_dependencies.gradle"), 'w') as f:
 			f.write("dependencies {\n")
@@ -135,13 +144,23 @@ def update_dependencies_commit():
 		sources_project_list.append(project)
 
 	reset_deps_files(sources_project_list)
+	add_include_to_settings(sources_project_list)
+
+	with open(os.path.join(current_dir, "app", "internal_dependencies.gradle"), 'w') as f:
+		f.write("dependencies {\n")
+		for project in all_project_list:
+			if project.name not in sources:
+				commit = radar[project.name]['commit']
+				f.write(f"\timplementation 'com.example:{project.name}:{commit}'\n")
+			else:
+				f.write(f"\timplementation project(':libs:{project.name}')\n")
+		f.write("}\n")
 
 	for project in sources_project_list:
 		dependencies_file = os.path.join(project.local_path, "dependencies")
 		if not os.path.exists(dependencies_file):
 			continue
 		with open(dependencies_file, 'r') as f:
-			# split file by new line
 			dependencies = f.read().splitlines()
 		gradle_dependencies_file = os.path.join(project.local_path, "internal_dependencies.gradle")
 		with open(gradle_dependencies_file, 'w') as f:
