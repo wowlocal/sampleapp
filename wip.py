@@ -54,7 +54,7 @@ def create_checkouts_dir():
 		os.mkdir(checkouts_dir)
 	return checkouts_dir
 
-def reset_deps_files():
+def reset_deps_files(projects):
 	settings_deps_file = os.path.join(current_dir, "internal_dependencies.gradle")
 	open(settings_deps_file, 'w').close()
 	for project in projects:
@@ -121,6 +121,8 @@ def update_dependencies_commit():
 	for project in project_list:
 		project.local_path = os.path.join(checkouts, project.name)
 
+	reset_deps_files(project_list)
+
 	for project in project_list:
 		dependencies_file = os.path.join(project.local_path, "dependencies")
 		if not os.path.exists(dependencies_file):
@@ -136,20 +138,32 @@ def update_dependencies_commit():
 				f.write(f"\timplementation 'com.example:{dependency}:{commit}'\n")
 			f.write("}\n")
 
-if __name__ == "__main__":
-	update_dependencies_commit()
-
-
-if __name__ == "2__main__":
-	projects = projects_from_toml(toml_file)
+def publish(no_build):
+	project_list = projects_from_toml(toml_file)
 	checkouts = create_checkouts_dir()
-	for project in projects:
+	for project in project_list:
 		path = os.path.join(checkouts, project.name)
 		project.new_commit = clone_and_checkout(project.repo, path)
 		project.local_path = path
-	reset_deps_files()
-	change_dependencies_to_local_sources(projects)
-	append_publish_to_gradle_file(projects)
-	if publish_gradle_libs(projects) == 0:
-		update_radar_file(projects)
+	reset_deps_files(project_list)
+	change_dependencies_to_local_sources(project_list)
+	append_publish_to_gradle_file(project_list)
+	if no_build: return
+	if publish_gradle_libs(project_list) == 0:
+		update_radar_file(project_list)
+
+if __name__ == "__main__":
+	argv = sys.argv
+	if argv[1] == "update":
+		update_dependencies_commit()
+	elif argv[1] == "publish":
+		no_build = False
+		if "--no-build" or "--no_build" in argv:
+			no_build = True
+		publish(no_build)
+	else:
+		print("Invalid argument. Use 'update' or 'publish'")
+		exit(1)
+
+
 
