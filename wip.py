@@ -6,7 +6,7 @@ from git import Repo
 current_dir = os.path.dirname(os.path.realpath(__file__))
 toml_file = os.path.join(current_dir, "radar")
 
-def clone_and_checkout(repo_url, local_path):
+def clone_and_checkout(repo_url, local_path, commit=None, branch=None) -> Repo:
 	if os.path.exists(local_path):
 		repo = Repo(local_path)
 		repo.git.fetch()
@@ -17,7 +17,10 @@ def clone_and_checkout(repo_url, local_path):
 		repo.git.pull()
 		return repo.git.rev_parse('HEAD')
 	repo = Repo.clone_from(repo_url, local_path)
-	repo.git.checkout('origin/develop', b='develop')
+	if commit:
+		repo.git.checkout(commit)
+	elif branch:
+		repo.git.checkout('origin/' + branch, b=branch)
 	return repo.git.rev_parse('HEAD')
 
 def parse_toml(toml_file):
@@ -113,17 +116,27 @@ def update_radar_file(project_list):
 			toml.dump(radar, f)
 
 def update_dependencies_commit():
-	project_list = projects_from_toml(toml_file)
+	all_project_list = projects_from_toml(toml_file)
 	radar = parse_toml(toml_file)
 
+	sources = []
+	if os.path.exists(os.path.join(current_dir, "sources")):
+		with open(os.path.join(current_dir, "sources"), 'r') as f:
+			sources = f.read().splitlines()
+
 	checkouts = create_checkouts_dir()
+	sources_project_list = []
 
-	for project in project_list:
-		project.local_path = os.path.join(checkouts, project.name)
+	for project in all_project_list:
+		if project.name not in sources: continue
+		path = os.path.join(checkouts, project.name)
+		clone_and_checkout(project.repo, path, project.commit)
+		project.local_path = path
+		sources_project_list.append(project)
 
-	reset_deps_files(project_list)
+	reset_deps_files(sources_project_list)
 
-	for project in project_list:
+	for project in sources_project_list:
 		dependencies_file = os.path.join(project.local_path, "dependencies")
 		if not os.path.exists(dependencies_file):
 			continue
@@ -134,8 +147,11 @@ def update_dependencies_commit():
 		with open(gradle_dependencies_file, 'w') as f:
 			f.write("dependencies {\n")
 			for dependency in dependencies:
-				commit = radar[dependency]['commit']
-				f.write(f"\timplementation 'com.example:{dependency}:{commit}'\n")
+				if dependency not in sources:
+					commit = radar[dependency]['commit']
+					f.write(f"\timplementation 'com.example:{dependency}:{commit}'\n")
+				else:
+					f.write(f"\timplementation project(':libs:{dependency}')\n")
 			f.write("}\n")
 
 def publish(no_build):
@@ -153,6 +169,10 @@ def publish(no_build):
 		update_radar_file(project_list)
 
 if __name__ == "__main__":
+	# change dir to script dir
+	os.chdir(os.path.dirname(os.path.realpath(__file__)))
+	current_dir = os.getcwd()
+
 	argv = sys.argv
 	if argv[1] == "update":
 		update_dependencies_commit()
